@@ -23,6 +23,8 @@ parameters {
   real alpha_2;
   real beta_precip;
   real<lower=0> sigma_obs[n_obsvar];
+  real beta_site[M];
+  real<lower=0> sigma_site;
 }
 transformed parameters {
   vector[M] pred[N];// this is the matrix of time series data?
@@ -32,7 +34,7 @@ transformed parameters {
     x[1,s] = x0[s]; // initial state, vague prior below
     x[2,s] = x1[s]; // initial state, vague prior below
     for(t in 3:N) {
-      x[t,s] = alpha_0 + alpha_1*x[t-1,s] + alpha_2*x[t-2,s] + beta_precip*precip[t-1]; 
+      x[t,s] = alpha_0 + alpha_1*x[t-1,s] + alpha_2*x[t-2,s] + beta_precip*precip[t-1]+beta_site[s]; 
       }
   }
   // map predicted states from process model to time series
@@ -54,6 +56,8 @@ model {
   alpha_1 ~ normal(0, 10); // direct density-dependence
   alpha_2 ~ normal(0, 10); //delayed density-dependence
   beta_precip ~ normal(0, 10); //precipitation 
+  beta_site ~ normal(0, sigma_site); //RE
+  sigma_site ~ cauchy(0,5); //RE sigma
   // likelihood
   for(i in 1:n_pos) {
     

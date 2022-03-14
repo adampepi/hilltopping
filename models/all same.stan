@@ -26,6 +26,8 @@ parameters {
   real beta_temp;
   real beta_pt;
   real<lower=0> sigma_obs[n_obsvar];
+  real beta_site[M];
+  real<lower=0> sigma_site;
 }
 transformed parameters {
   vector[M] pred[N];// this is the matrix of time series data?
@@ -35,7 +37,7 @@ transformed parameters {
     x[1,s] = x0[s]; // initial state, vague prior below
     x[2,s] = x1[s]; // initial state, vague prior below
     for(t in 3:N) {
-      x[t,s] = alpha_0 + alpha_1*x[t-1,s] + alpha_2*x[t-2,s] + beta_precip*precip[t-1] + beta_temp*temp[t-1] + beta_CI*CI[s,t-1] + beta_pt*precip[t-1]*temp[t-1];
+      x[t,s] = alpha_0 + alpha_1*x[t-1,s] + alpha_2*x[t-2,s] + beta_precip*precip[t-1] + beta_temp*temp[t-1] + beta_CI*CI[s,t-1] + beta_pt*precip[t-1]*temp[t-1]+beta_site[s];
       }
   }
   // map predicted states from process model to time series
@@ -60,6 +62,8 @@ model {
   beta_temp ~ normal(0, 10); //temperature
   beta_pt ~ normal(0, 10); // temp and precip interaction 
   beta_CI ~ normal(0, 10); //connectivity
+  beta_site ~ normal(0, sigma_site); //RE
+  sigma_site ~ cauchy(0,5); //RE sigma
   // likelihood
   for(i in 1:n_pos) {
     
@@ -70,7 +74,7 @@ model {
 }
 generated quantities {
   vector[n_pos] log_lik;
-  // regression example in loo() package
+  // 
  
  for (n in 1:n_pos) log_lik[n] = normal_lpdf(y[n] | pred[col_indx_pos[n], row_indx_pos[n]], sigma_obs[obsVariances[row_indx_pos[n]]]);
 

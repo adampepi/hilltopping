@@ -165,7 +165,7 @@ for(t in 1:15){
     for(j in 1:8){
       ##Using each hilltop
       dist<-distmat[i,12+j]
-      area<-exp(-0.65+1.18*CIhillslogscaled[j,t]+0.02*elevations[j])
+      area<--0.89+1.27*CIhillslogscaled[j,t]+0.02*elevations[j]
       exps[j]<-exp(-alpha*dist)*area*20 
       
     }

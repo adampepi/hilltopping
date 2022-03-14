@@ -1,3 +1,4 @@
+rm(list=ls())
 ###BMR metapopulation dynamics simulation
 library(ncf)
 library(ggplot2)
@@ -134,6 +135,7 @@ elevationsim<-function(Hsd=183.9366,##Scaling paratemeters for hilltop connectiv
   pops<-matrix(0,ncol=period,nrow=nsites)
   CIpatch<-matrix(nrow=nsites,ncol=period)
   CIhills<-matrix(nrow=8,ncol=period)
+  elevations<-c(40,40,90,80,40,140,190,40)
   pops[,1]<-init1
   pops[,2]<-init2
   for(t in 3:period){
@@ -158,7 +160,7 @@ elevationsim<-function(Hsd=183.9366,##Scaling paratemeters for hilltop connectiv
       for(j in 1:8){
         ##Using each hilltop
         dist<-distmat[r,12+j]
-        area<-CIhills[j,t-1]
+        area<--0.89+1.27*CIhills[j,t-1]+0.02*elevations[j]
         exps[j]<-exp(-alpha*dist)*area
       }
       CIpatch[r,t-1]<-sum(exps)
@@ -240,7 +242,9 @@ hanskisim<-function(
   }
   return(pops2)
 }
-
+pop1<-hanskisim()
+matplot(exp(t(pop1)),type="l",log='y')
+pop1
 
 ##Running simulations
 reps<-10000
@@ -366,10 +370,10 @@ quantile(simdat$extinction[simdat$model=="hill"],c(0.25,0.5,0.75))
 quantile(simdat$colonization[simdat$model=="hill"],c(0.25,0.5,0.75))
 quantile(simdat$synchrony[simdat$model=="hill"],c(0.25,0.5,0.75))
 
-quantile(simdat$occupancy[simdat$model=="hanski"],c(0.25,0.5,0.75))
-quantile(simdat$extinction[simdat$model=="hanski"],c(0.25,0.5,0.75))
-quantile(simdat$colonization[simdat$model=="hanski"],c(0.25,0.5,0.75))
-quantile(simdat$synchrony[simdat$model=="hanski"],c(0.25,0.5,0.75))
+quantile(simdat$occupancy[simdat$model=="Hanski"],c(0.25,0.5,0.75))
+quantile(simdat$extinction[simdat$model=="Hanski"],c(0.25,0.5,0.75))
+quantile(simdat$colonization[simdat$model=="Hanski"],c(0.25,0.5,0.75))
+quantile(simdat$synchrony[simdat$model=="Hanski"],c(0.25,0.5,0.75))
 
 quantile(simdat$occupancy[simdat$model=="elevation"],c(0.25,0.5,0.75))
 quantile(simdat$extinction[simdat$model=="elevation"],c(0.25,0.5,0.75))
@@ -405,18 +409,20 @@ medians[4,2:5]<-real.values
 
 ##Make plots
 
-occupancyplot<-ggplot(data=simdat,aes(x=occupancy,color=model))+geom_density(adjust=1.5,lwd=1)+geom_vline(data=medians,aes(xintercept=occupancy,color=model),lty=2,lwd=1)+scale_color_viridis_d()+theme_classic()+xlab("Occupancy")+theme(legend.position = 'top' )+labs(color="Model:")+xlim(0.7,0.99)
+occupancyplot<-ggplot(data=simdat,aes(x=occupancy,color=model))+geom_density(adjust=1.5,lwd=1)+geom_vline(data=medians,aes(xintercept=occupancy,color=model),lty=2,lwd=1)+scale_color_viridis_d()+theme_classic()+xlab("Mean occupancy (proportion)")+ylab('Kernel density')+theme(legend.position = 'top' )+labs(color="Model:")+xlim(0.7,0.99)
 occupancyplot
 
 medians
-colonizationplot<-ggplot(data=simdat,aes(x=colonization,color=model))+geom_density(adjust=1.5,lwd=1)+geom_vline(data=medians,aes(xintercept=colonization,color=model),lty=2,lwd=1)+scale_color_viridis_d()+theme_classic()+xlab("Colonization")+theme(legend.position = 'none')+xlim(2,23)
+colonizationplot<-ggplot(data=simdat,aes(x=colonization,color=model))+geom_density(adjust=1.5,lwd=1)+geom_vline(data=medians,aes(xintercept=colonization,color=model),lty=2,lwd=1)+scale_color_viridis_d()+theme_classic()+xlab("Mean colonization events")+ylab('Kernel density')+theme(legend.position = 'none')+xlim(2,23)
 
-extinctionplot<-ggplot(data=simdat,aes(x=extinction,color=model))+geom_density(adjust=1.5,lwd=1)+geom_vline(data=medians,aes(xintercept=extinction,color=model),lty=2,lwd=1)+scale_color_viridis_d()+theme_classic()+xlab("Extinction")+theme(legend.position = 'none')+xlim(2,23)
+extinctionplot<-ggplot(data=simdat,aes(x=extinction,color=model))+geom_density(adjust=1.5,lwd=1)+geom_vline(data=medians,aes(xintercept=extinction,color=model),lty=2,lwd=1)+scale_color_viridis_d()+theme_classic()+xlab("Mean extinction events")+ylab('Kernel density')+theme(legend.position = 'none')+xlim(2,23)
 
 extinctionplot
 
 
-synchronyplot<-ggplot(data=simdat,aes(x=synchrony,color=model))+geom_density(adjust=1.5,lwd=1)+geom_vline(data=medians,aes(xintercept=synchrony,color=model),lty=2,lwd=1)+scale_color_viridis_d()+theme_classic()+xlab("Synchrony")+theme(legend.position = 'none')+xlim(0.45,.7)
+synchronyplot<-ggplot(data=simdat,aes(x=synchrony,color=model))+geom_density(adjust=1.5,lwd=1)+geom_vline(data=medians,aes(xintercept=synchrony,color=model),lty=2,lwd=1)+scale_color_viridis_d()+theme_classic()+xlab("Mean synchrony")+ylab('Kernel density')+theme(legend.position = 'none')+xlim(0.45,.7)
+
+saveRDS(simdat, file = "simdat.rds")
 
 
 plot_grid(occupancyplot,colonizationplot,extinctionplot,synchronyplot,labels=c("A","B",'C',"D"),nrow=4,rel_heights = c(1.25,1,1,1))

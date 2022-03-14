@@ -80,8 +80,9 @@ fit1<-rstan::stan(file='models/all same.stan',
                                "col_indx_pos" = col_indx_pos,
                                "row_indx_pos" = row_indx_pos,
                                "y_int"=round(y)),
-                   pars = c("pred","log_lik", "alpha_0","alpha_1","alpha_2","beta_precip","beta_CI","beta_temp","beta_pt","sigma_obs"), chains = 3,
+                   pars = c("pred","log_lik", "alpha_0","alpha_1","alpha_2","beta_precip","beta_CI","beta_temp","beta_pt","sigma_obs","sigma_site"), chains = 3,
                    iter = 20000, thin = 3, cores=3)
+options(max.print=10000)
 print(fit1)
 
 fit2<-rstan::stan(file='models/full dd temp precip.stan',
@@ -183,6 +184,19 @@ fit9<-rstan::stan(file='models/full dd temp CI.stan',
                                "y_int"=round(y)),
                    pars = c("pred","log_lik", "alpha_0","alpha_1","beta_CI","beta_temp"), chains = 3,
                    iter = 20000, thin = 3, cores=3)
+
+fit10<-rstan::stan(file='models/full no CI.stan',
+                  data = list("N"=N,"M"=M, "y"=y, 'precip'=precipscaled,'temp'=tempscaled, 'CI'=CImat,
+                              "states"=states, "S" = max(states), "W"=W,
+                              "wetdry"=wetdry,
+                              "obsVariances"=obsVariances,
+                              "n_obsvar" = max(obsVariances),  
+                              "n_pos" = n_pos,
+                              "col_indx_pos" = col_indx_pos,
+                              "row_indx_pos" = row_indx_pos,
+                              "y_int"=round(y)),
+                  pars = c("pred","log_lik", "alpha_0","alpha_1",'beta_precip',"beta_temp",'beta_pt'), chains = 3,
+                  iter = 20000, thin = 3, cores=3)
 
 
 fit1H<-rstan::stan(file='models/all same.stan',
@@ -297,6 +311,18 @@ fit9H<-rstan::stan(file='models/full dd temp CI.stan',
                                 "y_int"=round(y)),
                     pars = c("pred","log_lik", "alpha_0","alpha_1","beta_CI","beta_temp"), chains = 3,
                     iter = 20000, thin = 3, cores=3)
+fit10H<-rstan::stan(file='models/full no CI.stan',
+                   data = list("N"=N,"M"=M, "y"=y, 'precip'=precipscaled,'temp'=tempscaled, 'CI'=HCImat,
+                               "states"=states, "S" = max(states), "W"=W,
+                               "wetdry"=wetdry,
+                               "obsVariances"=obsVariances,
+                               "n_obsvar" = max(obsVariances),  
+                               "n_pos" = n_pos,
+                               "col_indx_pos" = col_indx_pos,
+                               "row_indx_pos" = row_indx_pos,
+                               "y_int"=round(y)),
+                   pars = c("pred","log_lik", "alpha_0","alpha_1",'beta_precip',"beta_temp",'beta_pt'), chains = 3,
+                   iter = 20000, thin = 3, cores=3)
 fit1E<-rstan::stan(file='models/all same.stan',
                     data = list("N"=N,"M"=M, "y"=y, 'precip'=precipscaled,'temp'=tempscaled, 'CI'=ECImat,
                                 "states"=states, "S" = max(states), "W"=W,
@@ -409,17 +435,28 @@ fit9E<-rstan::stan(file='models/full dd temp CI.stan',
                                 "y_int"=round(y)),
                     pars = c("pred","log_lik", "alpha_0","alpha_1","beta_CI","beta_temp"), chains = 3,
                     iter = 20000, thin = 3, cores=3)
+fit10E<-rstan::stan(file='models/full no CI.stan',
+                   data = list("N"=N,"M"=M, "y"=y, 'precip'=precipscaled,'temp'=tempscaled, 'CI'=ECImat,
+                               "states"=states, "S" = max(states), "W"=W,
+                               "wetdry"=wetdry,
+                               "obsVariances"=obsVariances,
+                               "n_obsvar" = max(obsVariances),  
+                               "n_pos" = n_pos,
+                               "col_indx_pos" = col_indx_pos,
+                               "row_indx_pos" = row_indx_pos,
+                               "y_int"=round(y)),
+                   pars = c("pred","log_lik", "alpha_0","alpha_1",'beta_precip',"beta_temp",'beta_pt'), chains = 3,
+                   iter = 20000, thin = 3, cores=3)
 
 
 
 
-
-posterior1 <- as.matrix(fit1)
+posterior1 <- as.matrix(fit1E)
 mcmc_areas(posterior1,
            pars = c("alpha_0","alpha_1",'alpha_2',"beta_precip",'beta_temp',"beta_pt",'beta_CI'),
-           prob = 0.90, prob_outer = 1,) +scale_y_discrete(labels=c(expression(alpha[0]),expression(alpha[1]),expression(alpha[2]),expression(beta[precip]),expression(beta[temp]),expression(beta[temp%*%precip]),expression(beta[connectivity])))+theme(plot.title = element_text(hjust = 0.5,),text=element_text(size=20))
+           prob = 0.90, prob_outer = 1,) +scale_y_discrete(labels=c(expression(alpha[0]),expression(alpha[1]),expression(alpha[2]),expression(beta[precip]),expression(beta[temp]),expression(beta[temp%*%precip]),expression(beta[connectivity])))+theme(plot.title = element_text(hjust = 0.5,),text=element_text(size=20))+xlab('Standardized value')+ylab('Parameter')
 
-
+bayes_R2(posterior1)
 
 
 
@@ -470,6 +507,11 @@ waic9<-loo::waic(log_lik9)
 rel_n_eff9 <- relative_eff(exp(log_lik9))
 loo9<-loo(log_lik9, r_eff = rel_n_eff9, cores = 2,save_psis = T)
 
+log_lik10 <-extract_log_lik(fit10, merge_chains = FALSE)
+waic10<-loo::waic(log_lik10)
+rel_n_eff10 <- relative_eff(exp(log_lik10))
+loo10<-loo(log_lik10, r_eff = rel_n_eff10, cores = 2,save_psis = T)
+
 
 
 log_lik1H <-extract_log_lik(fit1H, merge_chains = FALSE)
@@ -517,6 +559,11 @@ waic9H<-loo::waic(log_lik9H)
 rel_n_eff9H <- relative_eff(exp(log_lik9H))
 loo9H<-loo(log_lik9H, r_eff = rel_n_eff9H, cores = 2)
 
+log_lik10H <-extract_log_lik(fit10H, merge_chains = FALSE)
+waic10H<-loo::waic(log_lik10H)
+rel_n_eff10H <- relative_eff(exp(log_lik10H))
+loo10H<-loo(log_lik10H, r_eff = rel_n_eff10H, cores = 2,save_psis = T)
+
 log_lik1E <-extract_log_lik(fit1E, merge_chains = FALSE)
 waic1E<-loo::waic(log_lik1E)
 rel_n_eff1E <- relative_eff(exp(log_lik1E), chain_id = 1:3)
@@ -562,14 +609,19 @@ waic9E<-loo::waic(log_lik9E)
 rel_n_eff9E <- relative_eff(exp(log_lik9E))
 loo9E<-loo(log_lik9E, r_eff = rel_n_eff9E, cores = 2)
 
+log_lik10E <-extract_log_lik(fit10E, merge_chains = FALSE)
+waic10E<-loo::waic(log_lik10E)
+rel_n_eff10E <- relative_eff(exp(log_lik10E))
+loo10E<-loo(log_lik10E, r_eff = rel_n_eff10E, cores = 2,save_psis = T)
+
 
 
 ###Selection of base model
 
 
-comp1.1 <- loo_compare(waic1,waic2,waic3,waic4,waic5,waic6,waic7,waic8,waic9)
+comp1.1 <- loo_compare(waic1,waic2,waic3,waic4,waic5,waic6,waic7,waic8,waic9,waic10)
 
-comp2.1 <- loo_compare(loo1,loo2,loo3,loo4,loo5,loo6,loo6,loo8,loo9)
+comp2.1 <- loo_compare(loo1,loo2,loo3,loo4,loo5,loo6,loo6,loo8,loo9,loo10)
 
 print(comp1.1, digits = 2)
 
@@ -580,13 +632,13 @@ comptable1$delta_waic<-comptable1$waic-comptable1$waic[1]
 
 
 
-comp1.1H <- loo_compare(waic1H,waic2H,waic3H,waic4H,waic5H,waic6H,waic7H,waic8H,waic9H)
+comp1.1H <- loo_compare(waic1H,waic2H,waic3H,waic4H,waic5H,waic6H,waic7H,waic8H,waic9H,waic10H)
 comp1.1H.1<-as.data.frame(comp1.1H)
 str(comp1.1H.1)
 comp1.1H.2<-comp1.1H.1[match(rownames(comptable1),rownames(comp1.1H.1)),]
 comp1.1H.2
 
-comp1.1E <- loo_compare(waic1E,waic2E,waic3E,waic4E,waic5E,waic6E,waic7E,waic8E,waic9E)
+comp1.1E <- loo_compare(waic1E,waic2E,waic3E,waic4E,waic5E,waic6E,waic7E,waic8E,waic9E,waic10E)
 
 
 comp1.1E.1<-as.data.frame(comp1.1E)
@@ -608,7 +660,7 @@ write.table(comptable1,"modelcompstruct3.csv")
 #### Posterior predicitive simulation of interaction between temp and precip
 
 ##Fit 13
-pfit13<-rstan::extract(fit1)
+pfit13<-rstan::extract(fit1E)
 precips<-seq(from=min(precipscaled),to=max(precipscaled),by=0.01)
 ppred1<-data.frame(Precipitation=precips,temp='Mean',Predicted=0,Draw=0)
 ppred2<-data.frame(Precipitation=precips,temp='Min',Predicted=0,Draw=0)

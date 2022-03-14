@@ -21,8 +21,9 @@ parameters {
   real alpha_0;
   real alpha_1;
   real alpha_2;
-  real beta_CI;
+  real beta_precip;
   real beta_temp;
+  real beta_pt;
   real<lower=0> sigma_obs[n_obsvar];
   real beta_site[M];
   real<lower=0> sigma_site;
@@ -35,7 +36,7 @@ transformed parameters {
     x[1,s] = x0[s]; // initial state, vague prior below
     x[2,s] = x1[s]; // initial state, vague prior below
     for(t in 3:N) {
-      x[t,s] = alpha_0 + alpha_1*x[t-1,s] + alpha_2*x[t-2,s] + beta_temp*temp[t-1] + beta_CI*CI[s,t-1]+beta_site[s];
+      x[t,s] = alpha_0 + alpha_1*x[t-1,s] + alpha_2*x[t-2,s] + beta_precip*precip[t-1] + beta_temp*temp[t-1]  + beta_pt*precip[t-1]*temp[t-1]+beta_site[s];
       }
   }
   // map predicted states from process model to time series
@@ -56,8 +57,9 @@ model {
   alpha_0 ~ normal(0, 10); // intercepts
   alpha_1 ~ normal(0, 10); // direct density-dependence
   alpha_2 ~ normal(0, 10); //delayed density-dependence
+  beta_precip ~ normal(0, 10); //precipitation 
   beta_temp ~ normal(0, 10); //temperature
-  beta_CI ~ normal(0, 10); //connectivity
+  beta_pt ~ normal(0, 10); // temp and precip interaction 
   beta_site ~ normal(0, sigma_site); //RE
   sigma_site ~ cauchy(0,5); //RE sigma
   // likelihood
@@ -70,7 +72,7 @@ model {
 }
 generated quantities {
   vector[n_pos] log_lik;
-  // regression example in loo() package
+  // 
  
  for (n in 1:n_pos) log_lik[n] = normal_lpdf(y[n] | pred[col_indx_pos[n], row_indx_pos[n]], sigma_obs[obsVariances[row_indx_pos[n]]]);
 
